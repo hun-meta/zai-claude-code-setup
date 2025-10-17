@@ -29,6 +29,7 @@ Automated setup scripts to use Claude Code with GLM-4.6 model together.
 - Automatic GLM custom command generation
 - Automatic PATH environment variable setup
 - **Cross-platform support** (macOS, Linux, Windows)
+- **Isolated config per command** via `CLAUDE_CONFIG_DIR` (`~/.claude-glm`) to avoid credential cross-contamination
 - Two execution modes:
   - `claude`: Standard subscription mode
   - `glm`: GLM-4.6 API mode
@@ -105,9 +106,15 @@ The script will request the following information:
 - **GLM Provider Base URL** (e.g.: `https://api.novita.ai/v3/anthropic`)
 - **GLM API Key** (API key issued by the service)
 
-### 5. Restart PowerShell
+### 5. Set session variables and restart PowerShell
 
-After setup is complete, close and reopen PowerShell.
+Set your GLM environment in your session or profile (example):
+```powershell
+$env:ANTHROPIC_API_KEY = "YOUR_GLM_KEY"
+$env:CLAUDE_BASE_URL   = "https://api.novita.ai/v3/anthropic"
+```
+
+Then close and reopen PowerShell.
 
 ---
 
@@ -236,9 +243,9 @@ This command uses default authentication:
 - **macOS/Linux**: `~/.claude/credentials.json`
 - **Windows**: `%USERPROFILE%\.claude\credentials.json`
 
-### Run Claude Code with GLM Model (API mode)
+### Run Claude Code with GLM Model (Isolated API mode)
 
-**macOS/Linux:**
+**macOS/Linux (set env in session before running):**
 ```bash
 # Start API server in current directory
 glm .
@@ -250,7 +257,13 @@ glm /path/to/project
 glm my_project
 ```
 
-**Windows:**
+Export these before running in the same session:
+```bash
+export ANTHROPIC_API_KEY="YOUR_GLM_KEY"
+export CLAUDE_BASE_URL="https://api.novita.ai/v3/anthropic"
+```
+
+**Windows (set env in session before running):**
 ```powershell
 # Start API server in current directory
 glm .
@@ -262,9 +275,18 @@ glm C:\path\to\project
 glm my_project
 ```
 
-This command uses custom Base URL and API key:
-- **macOS/Linux**: `~/.local/bin/glm` script
-- **Windows**: `%USERPROFILE%\bin\glm.bat` batch file
+Set these before running in the same session:
+```powershell
+$env:ANTHROPIC_API_KEY = "YOUR_GLM_KEY"
+$env:CLAUDE_BASE_URL   = "https://api.novita.ai/v3/anthropic"
+```
+
+This command runs with isolated config and scoped environment:
+- Config dir: `~/.claude-glm` (set by `CLAUDE_CONFIG_DIR`)
+- Env vars (scoped to process): `CLAUDE_BASE_URL`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`
+- Launchers:
+  - **macOS/Linux**: `~/.local/bin/glm` script
+  - **Windows**: `%USERPROFILE%\bin\glm.bat` batch file
 
 ## 🔍 Verification
 
@@ -284,13 +306,16 @@ cat ~/.local/bin/glm
 
 ### Windows
 
-To verify the setup is correct:
+To verify the setup is correct (isolated config):
 
 ```powershell
 # Check if glm command is in PATH
 where.exe glm
 
 # Sample output: C:\Users\username\bin\glm.bat
+
+# Check isolated config dir exists and has settings.json
+Test-Path "$env:USERPROFILE\.claude-glm\settings.json"
 
 # Check glm batch file contents
 type "$env:USERPROFILE\bin\glm.bat"

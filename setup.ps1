@@ -112,24 +112,43 @@ REM GLM-4.6 모델을 사용하기 위한 Claude Code 실행 스크립트
 REM This script runs in API mode with custom API endpoint and key
 REM 이 스크립트는 커스텀 API 엔드포인트와 키를 사용하여 API 모드로 실행됩니다.
 
-REM Set GLM service Base URL / GLM 서비스 Base URL 설정
-REM (e.g.: https://api.novita.ai/v3/anthropic)
-set CLAUDE_BASE_URL=$GLM_BASE_URL
+REM Use isolated config dir and scoped environment (new_solution.md approach)
+REM 분리 설정 디렉토리와 스코프 환경 변수 사용 (new_solution.md 방식)
+setlocal
 
-REM Set GLM API Key / GLM API 키 설정
-REM Please enter the API key issued by the service
-REM 해당 서비스에서 발급받은 API 키를 입력하세요.
+REM Isolated config dir / 분리 설정 디렉토리
+set CLAUDE_CONFIG_DIR=%USERPROFILE%\.claude-glm
+
+REM Set GLM service Base URL(s) and API Key (scoped to this process)
+REM GLM Base URL과 API 키 설정 (이 프로세스에만 적용)
+set CLAUDE_BASE_URL=$GLM_BASE_URL
+set ANTHROPIC_BASE_URL=$GLM_BASE_URL
 set ANTHROPIC_API_KEY=$GLM_API_KEY
 
-REM Run Claude Code in API mode
-REM Claude Code를 API 모드로 실행
-REM %* passes all arguments after glm command to claude
-REM %* 는 glm 명령어 뒤에 오는 모든 인자를 claude에 전달합니다.
-claude --api %*
+REM Run Claude Code (arguments passthrough)
+REM Claude Code 실행 (인자 그대로 전달)
+claude %*
+
+endlocal
 "@
 
 Set-Content -Path $batFilePath -Value $batContent -Encoding UTF8
 Write-Success "glm.bat script created successfully!"
+
+# Create isolated GLM config directory and settings.json
+# 분리된 GLM 설정 디렉토리와 settings.json 생성
+Write-Info "Creating GLM config directory and settings.json (~/.claude-glm)..."
+$glmConfigDir = Join-Path $env:USERPROFILE ".claude-glm"
+New-Item -ItemType Directory -Path $glmConfigDir -Force | Out-Null
+
+$settingsJson = @'
+{
+  "apiKeyHelper": "powershell -NoProfile -Command \"$env:ANTHROPIC_API_KEY\""
+}
+'@
+
+Set-Content -Path (Join-Path $glmConfigDir "settings.json") -Value $settingsJson -Encoding UTF8
+Write-Success "GLM config directory and settings.json created."
 
 # Step 6: Set PATH environment variable
 # 6단계: PATH 환경 변수 설정

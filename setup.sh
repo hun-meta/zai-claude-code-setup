@@ -91,20 +91,27 @@ cat > "$GLM_SCRIPT_PATH" << EOF
 # This script runs in API mode with custom API endpoint and key
 # 이 스크립트는 커스텀 API 엔드포인트와 키를 사용하여 API 모드로 실행됩니다.
 
-# Set GLM service Base URL / GLM 서비스 Base URL 설정
-export CLAUDE_BASE_URL="$GLM_BASE_URL"
-
-# Set GLM API Key / GLM API 키 설정
-export ANTHROPIC_API_KEY="$GLM_API_KEY"
-
-# Run Claude Code in API mode
-# Claude Code를 API 모드로 실행
-# "\$@" passes all arguments after glm command to claude
-# "\$@"는 glm 명령어 뒤에 오는 모든 인자를 claude에 전달합니다.
-claude --api "\$@"
+# Isolated config dir and scoped env vars per new_solution.md approach
+# 분리된 설정 디렉토리와 스코프 환경 변수 (new_solution.md 방식)
+CLAUDE_CONFIG_DIR="$HOME/.claude-glm" \
+CLAUDE_BASE_URL="$GLM_BASE_URL" \
+ANTHROPIC_BASE_URL="$GLM_BASE_URL" \
+ANTHROPIC_API_KEY="$GLM_API_KEY" \
+claude "\$@"
 EOF
 
 log_success "glm script created successfully!"
+
+# Ensure isolated GLM config directory and settings.json exist
+# 분리된 GLM 설정 디렉토리와 settings.json 생성
+log_info "Creating GLM config directory and settings.json (~/.claude-glm)..."
+mkdir -p "$HOME/.claude-glm"
+cat > "$HOME/.claude-glm/settings.json" << 'JSON'
+{
+  "apiKeyHelper": "printf %s \"$ANTHROPIC_API_KEY\""
+}
+JSON
+log_success "GLM config directory and settings.json created."
 
 # Step 5: Grant execution permission
 # 5단계: 실행 권한 부여

@@ -15,9 +15,12 @@ REM 해당 서비스에서 발급받은 API 키를 입력하세요.
 set ANTHROPIC_API_KEY=YOUR_GLM_API_KEY_HERE
 REM --- Configuration end / 설정 종료 ---
 
-REM Run Claude Code in API mode
-REM Claude Code를 API 모드로 실행
-REM %* passes all arguments after glm command to claude
-REM %* 는 glm 명령어 뒤에 오는 모든 인자(예: ., file.js 등)를 claude 명령어로 그대로 전달합니다.
-claude --api %*
+REM Run Claude Code with isolated config dir and scoped env (new_solution.md)
+REM 분리 설정 디렉토리와 스코프 환경 변수로 실행 (new_solution.md 방식)
+setlocal
+set CLAUDE_CONFIG_DIR=%USERPROFILE%\.claude-glm
+set ANTHROPIC_BASE_URL=%CLAUDE_BASE_URL%
+REM Arguments passthrough
+claude %*
+endlocal
 

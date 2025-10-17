@@ -16,9 +16,11 @@ export CLAUDE_BASE_URL="YOUR_GLM_PROVIDER_BASE_URL_HERE"
 export ANTHROPIC_API_KEY="YOUR_GLM_API_KEY_HERE"
 # --- Configuration end / 설정 종료 ---
 
-# Run Claude Code in API mode
-# Claude Code를 API 모드로 실행
-# "$@" passes all arguments after glm command to claude
-# "$@"는 glm 명령어 뒤에 오는 모든 인자(예: ., file.js 등)를 claude 명령어로 그대로 전달합니다.
-claude --api "$@"
+# Run Claude Code with isolated config dir and scoped env (new_solution.md)
+# 분리 설정 디렉토리와 스코프 환경 변수로 실행 (new_solution.md 방식)
+CLAUDE_CONFIG_DIR="$HOME/.claude-glm" \
+CLAUDE_BASE_URL="$CLAUDE_BASE_URL" \
+ANTHROPIC_BASE_URL="$CLAUDE_BASE_URL" \
+ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+claude "$@"
 
