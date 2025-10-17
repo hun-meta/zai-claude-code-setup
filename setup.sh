@@ -113,6 +113,138 @@ cat > "$HOME/.claude-glm/settings.json" << 'JSON'
 JSON
 log_success "GLM config directory and settings.json created."
 
+# Step 4.5: Install SuperClaude to GLM environment (optional)
+# 4.5단계: GLM 환경에 SuperClaude 설치 (선택 사항)
+echo ""
+log_info "Would you like to install SuperClaude in the GLM environment?"
+read -p "Install SuperClaude? (y/N): " INSTALL_SC
+
+if [[ "$INSTALL_SC" =~ ^[Yy]$ ]]; then
+    log_info "Checking for SuperClaude installation..."
+    
+    # Check if SuperClaude is available (npm first, then Python)
+    # npm 우선, 그 다음 Python 순서로 확인
+    SC_COMMAND=""
+    if command -v superclaude &> /dev/null; then
+        SC_COMMAND="superclaude"
+        log_success "SuperClaude (npm) is available."
+    elif command -v SuperClaude &> /dev/null; then
+        SC_COMMAND="SuperClaude"
+        log_success "SuperClaude (Python) is available."
+    elif python3 -m SuperClaude --version &> /dev/null 2>&1; then
+        SC_COMMAND="python3 -m SuperClaude"
+        log_success "SuperClaude (Python module) is available."
+    fi
+    
+    if [ -n "$SC_COMMAND" ]; then
+        log_info "Setting up SuperClaude for GLM environment (~/.claude-glm)..."
+        
+        echo ""
+        log_warning "IMPORTANT: SuperClaude will be copied to: ~/.claude-glm"
+        log_warning "This is separate from your default ~/.claude directory."
+        echo ""
+        
+        # Check if SuperClaude is already installed in default directory
+        # 기본 디렉토리에 SuperClaude가 설치되어 있는지 확인
+        if [ -f "$HOME/.claude/CLAUDE.md" ]; then
+            log_success "SuperClaude found in default directory (~/.claude)"
+            log_info "Copying SuperClaude files to GLM directory..."
+            
+            # List of SuperClaude files/directories to copy
+            # 복사할 SuperClaude 파일/디렉토리 목록
+            SC_FILES=(
+                "CLAUDE.md"
+                "COMMANDS.md"
+                "MODES.md"
+                "PERSONAS.md"
+                "PRINCIPLES.md"
+                "RULES.md"
+                "MCP.md"
+                "ORCHESTRATOR.md"
+                "FLAGS.md"
+                "commands"
+                "hooks"
+                "plugins"
+            )
+            
+            # Copy each file/directory if it exists
+            # 각 파일/디렉토리가 존재하면 복사
+            for item in "${SC_FILES[@]}"; do
+                if [ -e "$HOME/.claude/$item" ]; then
+                    cp -r "$HOME/.claude/$item" "$HOME/.claude-glm/"
+                    log_success "Copied: $item"
+                fi
+            done
+            
+            # Verify installation
+            # 설치 검증
+            if [ -f "$HOME/.claude-glm/CLAUDE.md" ]; then
+                log_success "SuperClaude successfully set up in GLM environment!"
+                echo ""
+                log_info "Copied SuperClaude files to ~/.claude-glm/"
+                log_info "Your GLM environment now has all SuperClaude features."
+            else
+                log_warning "Warning: CLAUDE.md not found after copy. Please check manually."
+            fi
+        else
+            log_warning "SuperClaude not found in default directory (~/.claude)"
+            log_info "Installing SuperClaude to default directory first..."
+            
+            # Install to default directory
+            # 기본 디렉토리에 설치
+            if $SC_COMMAND install; then
+                log_success "SuperClaude installed to default directory."
+                log_info "Now copying to GLM directory..."
+                
+                # Copy files after installation
+                # 설치 후 파일 복사
+                SC_FILES=(
+                    "CLAUDE.md"
+                    "COMMANDS.md"
+                    "MODES.md"
+                    "PERSONAS.md"
+                    "PRINCIPLES.md"
+                    "RULES.md"
+                    "MCP.md"
+                    "ORCHESTRATOR.md"
+                    "FLAGS.md"
+                    "commands"
+                    "hooks"
+                    "plugins"
+                )
+                
+                for item in "${SC_FILES[@]}"; do
+                    if [ -e "$HOME/.claude/$item" ]; then
+                        cp -r "$HOME/.claude/$item" "$HOME/.claude-glm/"
+                        log_success "Copied: $item"
+                    fi
+                done
+                
+                log_success "SuperClaude successfully set up in GLM environment!"
+            else
+                log_error "Failed to install SuperClaude. Please install manually."
+            fi
+        fi
+    else
+        log_warning "SuperClaude is not installed globally."
+        log_info "Please install SuperClaude first using one of these methods:"
+        echo "  - Using npm (recommended):  npm install -g @bifrost_inc/superclaude"
+        echo "  - Using pipx: pipx install SuperClaude"
+        echo "  - Using pip:  pip install SuperClaude"
+        echo ""
+        log_info "After installing, you can run this script again or manually install:"
+        echo "  CLAUDE_CONFIG_DIR=\"\$HOME/.claude-glm\" superclaude install  # npm version"
+        echo "  # or"
+        echo "  CLAUDE_CONFIG_DIR=\"\$HOME/.claude-glm\" SuperClaude install  # Python version"
+    fi
+else
+    log_info "Skipping SuperClaude installation."
+    log_info "You can install it later with:"
+    echo "  CLAUDE_CONFIG_DIR=\"\$HOME/.claude-glm\" superclaude install  # npm (recommended)"
+    echo "  # or"
+    echo "  CLAUDE_CONFIG_DIR=\"\$HOME/.claude-glm\" SuperClaude install  # Python"
+fi
+
 # Step 5: Grant execution permission
 # 5단계: 실행 권한 부여
 log_info "Granting execution permission to glm script..."

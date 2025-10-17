@@ -28,6 +28,7 @@ Automated setup scripts to use Claude Code with GLM-4.6 model together.
 - Automatic Node.js and Claude Code installation check
 - Automatic GLM custom command generation
 - Automatic PATH environment variable setup
+- **Automatic SuperClaude installation** (optional) to GLM environment
 - **Cross-platform support** (macOS, Linux, Windows)
 - **Isolated config per command** via `CLAUDE_CONFIG_DIR` (`~/.claude-glm`) to avoid credential cross-contamination
 - Two execution modes:
@@ -61,6 +62,7 @@ chmod +x setup.sh
 The script will request the following information:
 - **GLM Provider Base URL** (e.g.: `https://api.novita.ai/v3/anthropic`)
 - **GLM API Key** (API key issued by the service)
+- **SuperClaude Installation** (optional): Choose whether to install SuperClaude in GLM environment
 
 ### 3. Apply Environment Variables
 
@@ -105,6 +107,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 The script will request the following information:
 - **GLM Provider Base URL** (e.g.: `https://api.novita.ai/v3/anthropic`)
 - **GLM API Key** (API key issued by the service)
+- **SuperClaude Installation** (optional): Choose whether to install SuperClaude in GLM environment
 
 ### 5. Set session variables and restart PowerShell
 
@@ -288,6 +291,150 @@ This command runs with isolated config and scoped environment:
   - **macOS/Linux**: `~/.local/bin/glm` script
   - **Windows**: `%USERPROFILE%\bin\glm.bat` batch file
 
+---
+
+## 🔧 Installing SuperClaude in GLM Environment
+
+Since `glm` uses an isolated config directory (`~/.claude-glm`), you need to set up SuperClaude separately for the GLM environment. The setup script automatically copies SuperClaude files from your default `~/.claude` directory to `~/.claude-glm`.
+
+### Prerequisites
+
+- SuperClaude installed in default directory (`~/.claude`)
+- If not installed, use one of these methods:
+  - **npm (recommended)**: `npm install -g @bifrost_inc/superclaude`
+  - **pipx**: `pipx install SuperClaude`
+  - **pip**: `pip install SuperClaude`
+
+### Automated Setup (via setup script)
+
+The `setup.sh` or `setup.ps1` script will automatically:
+1. Check if SuperClaude is installed in `~/.claude`
+2. Copy all SuperClaude files to `~/.claude-glm`
+3. Verify the installation
+
+Simply answer 'y' when prompted during setup.
+
+### Manual Setup Steps
+
+If you prefer to set up SuperClaude manually for GLM:
+
+**Step 1: Install SuperClaude to default directory**
+
+```bash
+# Using npm (recommended)
+npm install -g @bifrost_inc/superclaude
+superclaude install
+
+# Or using pipx
+pipx install SuperClaude
+SuperClaude install
+
+# Or using pip
+pip install SuperClaude
+SuperClaude install
+```
+
+**Step 2: Copy SuperClaude files to GLM directory**
+
+```bash
+# Create GLM directory if it doesn't exist
+mkdir -p ~/.claude-glm
+
+# Copy SuperClaude files
+cp ~/.claude/CLAUDE.md ~/.claude-glm/
+cp ~/.claude/COMMANDS.md ~/.claude-glm/
+cp ~/.claude/MODES.md ~/.claude-glm/
+cp ~/.claude/PERSONAS.md ~/.claude-glm/
+cp ~/.claude/PRINCIPLES.md ~/.claude-glm/
+cp ~/.claude/RULES.md ~/.claude-glm/
+cp ~/.claude/MCP.md ~/.claude-glm/
+cp ~/.claude/ORCHESTRATOR.md ~/.claude-glm/
+cp ~/.claude/FLAGS.md ~/.claude-glm/
+cp -r ~/.claude/commands ~/.claude-glm/
+cp -r ~/.claude/hooks ~/.claude-glm/
+cp -r ~/.claude/plugins ~/.claude-glm/
+```
+
+**Step 3: Verify installation**
+
+```bash
+# Check if files were copied
+ls -la ~/.claude-glm/
+
+# You should see:
+# - CLAUDE.md
+# - COMMANDS.md
+# - MODES.md
+# - commands/
+# - hooks/
+# - plugins/
+# ... and other SuperClaude files
+```
+
+### Windows Manual Setup
+
+For Windows, use PowerShell:
+
+**Step 1: Install SuperClaude to default directory**
+
+```powershell
+# Using npm (recommended)
+npm install -g @bifrost_inc/superclaude
+superclaude install
+
+# Or using pip
+pip install SuperClaude
+SuperClaude install
+```
+
+**Step 2: Copy SuperClaude files to GLM directory**
+
+```powershell
+# Copy SuperClaude files
+Copy-Item "$env:USERPROFILE\.claude\CLAUDE.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\COMMANDS.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\MODES.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\PERSONAS.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\PRINCIPLES.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\RULES.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\MCP.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\ORCHESTRATOR.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\FLAGS.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\commands" "$env:USERPROFILE\.claude-glm\" -Recurse -Force
+Copy-Item "$env:USERPROFILE\.claude\hooks" "$env:USERPROFILE\.claude-glm\" -Recurse -Force
+Copy-Item "$env:USERPROFILE\.claude\plugins" "$env:USERPROFILE\.claude-glm\" -Recurse -Force
+```
+
+### Verification
+
+After setup, when you run `glm .`, you should be able to use SuperClaude commands:
+
+```bash
+# Set environment variables (macOS/Linux)
+export ANTHROPIC_API_KEY="YOUR_GLM_KEY"
+export CLAUDE_BASE_URL="https://api.novita.ai/v3/anthropic"
+
+# Or on Windows
+$env:ANTHROPIC_API_KEY = "YOUR_GLM_KEY"
+$env:CLAUDE_BASE_URL = "https://api.novita.ai/v3/anthropic"
+
+# Run glm
+glm .
+
+# In Claude Code session, verify SuperClaude is available
+# Type / and you should see /sc: prefixed commands
+# Try: /sc:help
+```
+
+### Important Notes
+
+- SuperClaude in `~/.claude-glm` is **completely independent** from `~/.claude`
+- Files are **copied**, not linked, so updates to `~/.claude` won't affect `~/.claude-glm`
+- You can have different SuperClaude configurations for subscription vs GLM usage
+- To update SuperClaude in GLM environment, simply copy files again from `~/.claude`
+
+---
+
 ## 🔍 Verification
 
 ### macOS/Linux
@@ -469,7 +616,9 @@ Claude Code와 GLM-4.6 모델을 함께 사용하기 위한 자동화 설정 스
 - Node.js 및 Claude Code 설치 자동 확인
 - GLM 커스텀 명령어 자동 생성
 - PATH 환경 변수 자동 설정
+- **SuperClaude 자동 설치** (선택 사항) - GLM 환경에 설치
 - **크로스 플랫폼 지원** (macOS, Linux, Windows)
+- **명령어별 분리된 설정**: `CLAUDE_CONFIG_DIR` (`~/.claude-glm`)을 통해 자격 증명 충돌 방지
 - 두 가지 실행 모드 지원:
   - `claude`: 기본 구독 모드
   - `glm`: GLM-4.6 API 모드
@@ -501,6 +650,7 @@ chmod +x setup.sh
 스크립트가 다음 정보를 요청합니다:
 - **GLM Provider Base URL** (예: `https://api.novita.ai/v3/anthropic`)
 - **GLM API Key** (서비스에서 발급받은 키)
+- **SuperClaude 설치** (선택 사항): GLM 환경에 SuperClaude를 설치할지 선택
 
 ### 3. 환경 변수 적용
 
@@ -545,6 +695,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 스크립트가 다음 정보를 요청합니다:
 - **GLM Provider Base URL** (예: `https://api.novita.ai/v3/anthropic`)
 - **GLM API Key** (서비스에서 발급받은 키)
+- **SuperClaude 설치** (선택 사항): GLM 환경에 SuperClaude를 설치할지 선택
 
 ### 5. PowerShell 재시작
 
@@ -706,6 +857,150 @@ glm my_project
 이 명령어는 커스텀 Base URL과 API 키를 사용합니다:
 - **macOS/Linux**: `~/.local/bin/glm` 스크립트
 - **Windows**: `%USERPROFILE%\bin\glm.bat` 배치 파일
+
+---
+
+## 🔧 GLM 환경에 SuperClaude 설치하기
+
+`glm`은 분리된 설정 디렉토리(`~/.claude-glm`)를 사용하므로, GLM 환경에서도 SuperClaude를 별도로 설정해야 합니다. 설정 스크립트는 기본 `~/.claude` 디렉토리에서 SuperClaude 파일들을 `~/.claude-glm`으로 자동 복사합니다.
+
+### 사전 요구사항
+
+- 기본 디렉토리(`~/.claude`)에 SuperClaude가 설치되어 있어야 함
+- 설치되지 않은 경우 다음 중 하나로 설치:
+  - **npm (권장)**: `npm install -g @bifrost_inc/superclaude`
+  - **pipx**: `pipx install SuperClaude`
+  - **pip**: `pip install SuperClaude`
+
+### 자동 설정 (설정 스크립트 사용)
+
+`setup.sh` 또는 `setup.ps1` 스크립트가 자동으로:
+1. `~/.claude`에 SuperClaude가 설치되어 있는지 확인
+2. 모든 SuperClaude 파일을 `~/.claude-glm`으로 복사
+3. 설치 검증
+
+설정 중 프롬프트가 나타나면 'y'를 입력하세요.
+
+### 수동 설정 방법
+
+수동으로 GLM용 SuperClaude를 설정하려면:
+
+**1단계: 기본 디렉토리에 SuperClaude 설치**
+
+```bash
+# npm 사용 (권장)
+npm install -g @bifrost_inc/superclaude
+superclaude install
+
+# 또는 pipx 사용
+pipx install SuperClaude
+SuperClaude install
+
+# 또는 pip 사용
+pip install SuperClaude
+SuperClaude install
+```
+
+**2단계: GLM 디렉토리로 SuperClaude 파일 복사**
+
+```bash
+# GLM 디렉토리가 없다면 생성
+mkdir -p ~/.claude-glm
+
+# SuperClaude 파일 복사
+cp ~/.claude/CLAUDE.md ~/.claude-glm/
+cp ~/.claude/COMMANDS.md ~/.claude-glm/
+cp ~/.claude/MODES.md ~/.claude-glm/
+cp ~/.claude/PERSONAS.md ~/.claude-glm/
+cp ~/.claude/PRINCIPLES.md ~/.claude-glm/
+cp ~/.claude/RULES.md ~/.claude-glm/
+cp ~/.claude/MCP.md ~/.claude-glm/
+cp ~/.claude/ORCHESTRATOR.md ~/.claude-glm/
+cp ~/.claude/FLAGS.md ~/.claude-glm/
+cp -r ~/.claude/commands ~/.claude-glm/
+cp -r ~/.claude/hooks ~/.claude-glm/
+cp -r ~/.claude/plugins ~/.claude-glm/
+```
+
+**3단계: 설치 확인**
+
+```bash
+# 파일이 복사되었는지 확인
+ls -la ~/.claude-glm/
+
+# 다음 파일들이 있어야 합니다:
+# - CLAUDE.md
+# - COMMANDS.md
+# - MODES.md
+# - commands/
+# - hooks/
+# - plugins/
+# ... 그 외 SuperClaude 파일들
+```
+
+### Windows 수동 설정
+
+Windows에서는 PowerShell 사용:
+
+**1단계: 기본 디렉토리에 SuperClaude 설치**
+
+```powershell
+# npm 사용 (권장)
+npm install -g @bifrost_inc/superclaude
+superclaude install
+
+# 또는 pip 사용
+pip install SuperClaude
+SuperClaude install
+```
+
+**2단계: GLM 디렉토리로 SuperClaude 파일 복사**
+
+```powershell
+# SuperClaude 파일 복사
+Copy-Item "$env:USERPROFILE\.claude\CLAUDE.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\COMMANDS.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\MODES.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\PERSONAS.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\PRINCIPLES.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\RULES.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\MCP.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\ORCHESTRATOR.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\FLAGS.md" "$env:USERPROFILE\.claude-glm\"
+Copy-Item "$env:USERPROFILE\.claude\commands" "$env:USERPROFILE\.claude-glm\" -Recurse -Force
+Copy-Item "$env:USERPROFILE\.claude\hooks" "$env:USERPROFILE\.claude-glm\" -Recurse -Force
+Copy-Item "$env:USERPROFILE\.claude\plugins" "$env:USERPROFILE\.claude-glm\" -Recurse -Force
+```
+
+### 확인
+
+설정 후 `glm .`을 실행하면 SuperClaude 명령어를 사용할 수 있습니다:
+
+```bash
+# 환경 변수 설정 (macOS/Linux)
+export ANTHROPIC_API_KEY="YOUR_GLM_KEY"
+export CLAUDE_BASE_URL="https://api.novita.ai/v3/anthropic"
+
+# 또는 Windows
+$env:ANTHROPIC_API_KEY = "YOUR_GLM_KEY"
+$env:CLAUDE_BASE_URL = "https://api.novita.ai/v3/anthropic"
+
+# glm 실행
+glm .
+
+# Claude Code 세션에서 SuperClaude 사용 가능 확인
+# /를 입력하면 /sc: 접두사가 붙은 명령어들이 표시됩니다
+# 시도: /sc:help
+```
+
+### 중요 참고사항
+
+- `~/.claude-glm`의 SuperClaude는 `~/.claude`와 **완전히 독립적**입니다
+- 파일은 **복사**되므로, `~/.claude` 업데이트가 `~/.claude-glm`에 영향을 주지 않습니다
+- 구독 모드와 GLM 사용에 대해 서로 다른 SuperClaude 구성을 가질 수 있습니다
+- GLM 환경의 SuperClaude를 업데이트하려면, `~/.claude`에서 파일을 다시 복사하세요
+
+---
 
 ## 🔍 확인 사항
 

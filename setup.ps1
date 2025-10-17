@@ -150,6 +150,170 @@ $settingsJson = @'
 Set-Content -Path (Join-Path $glmConfigDir "settings.json") -Value $settingsJson -Encoding UTF8
 Write-Success "GLM config directory and settings.json created."
 
+# Step 5.5: Install SuperClaude to GLM environment (optional)
+# 5.5단계: GLM 환경에 SuperClaude 설치 (선택 사항)
+Write-Host ""
+Write-Info "Would you like to install SuperClaude in the GLM environment?"
+$installSC = Read-Host "Install SuperClaude? (y/N)"
+
+if ($installSC -match '^[Yy]$') {
+    Write-Info "Checking for SuperClaude installation..."
+    
+    # Check if SuperClaude is available (npm first, then Python)
+    # npm 우선, 그 다음 Python 순서로 확인
+    $scCommand = $null
+    $scType = $null
+    
+    try {
+        $null = Get-Command superclaude -ErrorAction Stop
+        $scCommand = "superclaude"
+        $scType = "npm"
+    } catch {
+        try {
+            $null = Get-Command SuperClaude -ErrorAction Stop
+            $scCommand = "SuperClaude"
+            $scType = "Python"
+        } catch {
+            try {
+                $null = python -m SuperClaude --version 2>$null
+                $scCommand = "python -m SuperClaude"
+                $scType = "Python module"
+            } catch {
+                $scCommand = $null
+            }
+        }
+    }
+    
+    if ($scCommand) {
+        Write-Success "SuperClaude ($scType) is available."
+        Write-Info "Setting up SuperClaude for GLM environment (~/.claude-glm)..."
+        
+        Write-Host ""
+        Write-Warning "IMPORTANT: SuperClaude will be copied to: $env:USERPROFILE\.claude-glm"
+        Write-Warning "This is separate from your default .claude directory."
+        Write-Host ""
+        
+        # Check if SuperClaude is already installed in default directory
+        # 기본 디렉토리에 SuperClaude가 설치되어 있는지 확인
+        $defaultClaudeDir = "$env:USERPROFILE\.claude"
+        $glmClaudeDir = "$env:USERPROFILE\.claude-glm"
+        
+        if (Test-Path "$defaultClaudeDir\CLAUDE.md") {
+            Write-Success "SuperClaude found in default directory ($defaultClaudeDir)"
+            Write-Info "Copying SuperClaude files to GLM directory..."
+            
+            # List of SuperClaude files/directories to copy
+            # 복사할 SuperClaude 파일/디렉토리 목록
+            $scFiles = @(
+                "CLAUDE.md",
+                "COMMANDS.md",
+                "MODES.md",
+                "PERSONAS.md",
+                "PRINCIPLES.md",
+                "RULES.md",
+                "MCP.md",
+                "ORCHESTRATOR.md",
+                "FLAGS.md",
+                "commands",
+                "hooks",
+                "plugins"
+            )
+            
+            # Copy each file/directory if it exists
+            # 각 파일/디렉토리가 존재하면 복사
+            foreach ($item in $scFiles) {
+                $sourcePath = Join-Path $defaultClaudeDir $item
+                $destPath = Join-Path $glmClaudeDir $item
+                
+                if (Test-Path $sourcePath) {
+                    Copy-Item -Path $sourcePath -Destination $destPath -Recurse -Force
+                    Write-Success "Copied: $item"
+                }
+            }
+            
+            # Verify installation
+            # 설치 검증
+            if (Test-Path "$glmClaudeDir\CLAUDE.md") {
+                Write-Success "SuperClaude successfully set up in GLM environment!"
+                Write-Host ""
+                Write-Info "Copied SuperClaude files to $glmClaudeDir"
+                Write-Info "Your GLM environment now has all SuperClaude features."
+            } else {
+                Write-Warning "Warning: CLAUDE.md not found after copy. Please check manually."
+            }
+        } else {
+            Write-Warning "SuperClaude not found in default directory ($defaultClaudeDir)"
+            Write-Info "Installing SuperClaude to default directory first..."
+            
+            try {
+                # Install to default directory
+                # 기본 디렉토리에 설치
+                if ($scCommand -eq "SuperClaude") {
+                    SuperClaude install
+                } elseif ($scCommand -eq "superclaude") {
+                    superclaude install
+                } else {
+                    python -m SuperClaude install
+                }
+                
+                Write-Success "SuperClaude installed to default directory."
+                Write-Info "Now copying to GLM directory..."
+                
+                # Copy files after installation
+                # 설치 후 파일 복사
+                $scFiles = @(
+                    "CLAUDE.md",
+                    "COMMANDS.md",
+                    "MODES.md",
+                    "PERSONAS.md",
+                    "PRINCIPLES.md",
+                    "RULES.md",
+                    "MCP.md",
+                    "ORCHESTRATOR.md",
+                    "FLAGS.md",
+                    "commands",
+                    "hooks",
+                    "plugins"
+                )
+                
+                foreach ($item in $scFiles) {
+                    $sourcePath = Join-Path $defaultClaudeDir $item
+                    $destPath = Join-Path $glmClaudeDir $item
+                    
+                    if (Test-Path $sourcePath) {
+                        Copy-Item -Path $sourcePath -Destination $destPath -Recurse -Force
+                        Write-Success "Copied: $item"
+                    }
+                }
+                
+                Write-Success "SuperClaude successfully set up in GLM environment!"
+            } catch {
+                Write-Error "Failed to install SuperClaude. Please install manually."
+                Write-Host $_.Exception.Message
+            }
+        }
+    } else {
+        Write-Warning "SuperClaude is not installed globally."
+        Write-Info "Please install SuperClaude first using one of these methods:"
+        Write-Host "  - Using npm (recommended):  npm install -g @bifrost_inc/superclaude"
+        Write-Host "  - Using pipx: pipx install SuperClaude"
+        Write-Host "  - Using pip:  pip install SuperClaude"
+        Write-Host ""
+        Write-Info "After installing, you can run this script again or manually install:"
+        Write-Host "  `$env:CLAUDE_CONFIG_DIR = `"`$env:USERPROFILE\.claude-glm`""
+        Write-Host "  superclaude install  # npm version"
+        Write-Host "  # or"
+        Write-Host "  SuperClaude install  # Python version"
+    }
+} else {
+    Write-Info "Skipping SuperClaude installation."
+    Write-Info "You can install it later with:"
+    Write-Host "  `$env:CLAUDE_CONFIG_DIR = `"`$env:USERPROFILE\.claude-glm`""
+    Write-Host "  superclaude install  # npm (recommended)"
+    Write-Host "  # or"
+    Write-Host "  SuperClaude install  # Python"
+}
+
 # Step 6: Set PATH environment variable
 # 6단계: PATH 환경 변수 설정
 Write-Info "Setting PATH environment variable..."
